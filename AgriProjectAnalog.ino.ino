@@ -1,6 +1,6 @@
 /*********
-  Rui Santos
-  Complete project details at http://randomnerdtutorials.com  
+IOT agriculture team
+  
 *********/
 
 // Including the ESP8266 WiFi library
@@ -14,7 +14,7 @@
 #define VOLTAGE_MAX 1.0
 #define VOLTAGE_MAXCOUNTS 1023.0
 // Replace with your network details
-const char* ssid = "Honorsom";
+const char* ssid = "somtalk";
 const char* password = "sunny007";
 unsigned long myChannelNumberInput = 228461;
 unsigned long myChannelNumberOutput= 227051;
@@ -32,8 +32,9 @@ static char humidityTemp[7];
 WiFiClient  client;
 // only runs once on boot
 void setup() {
-    pinMode(16,OUTPUT);//MOTOR
+   pinMode(16,OUTPUT);//MOTOR
     digitalWrite(16, LOW);
+   // pinMode(16,INPUT);
   // Initializing serial port for debugging purposes
   Serial.begin(115200);
   delay(10);
@@ -77,8 +78,14 @@ void loop() {
       digitalWrite(16, LOW);
       Serial.println("Motor OFF");
   }
+  Serial.println("Sensing Moisture value");
+  int j=0;
+  float total=0.0;
+  while(j<25)
+  {
    int sensorValue = analogRead(A0);
-   Serial.println(sensorValue);
+   //Serial.println(sensorValue);
+
   // Convert the analog reading 
   // On Uno,Mega,YunArduino:  0 - 1023 maps to 0 - 5 volts
   // On ESP8266:  0 - 1023 maps to 0 - 1 volts
@@ -87,11 +94,41 @@ void loop() {
   // Serial.println(randNumber*0.01);
   //float voltage = (sensorValue * (VOLTAGE_MAX / VOLTAGE_MAXCOUNTS))+5+(randNumber*0.01);
   float voltage =(1-(sensorValue * (VOLTAGE_MAX / VOLTAGE_MAXCOUNTS)))*100;
-
+  total=voltage;
+  //Serial.println(voltage);
+  j++;
+   delay(500);
+  }
+  //total= total/2;
+  float salt=0.0;
+Serial.println(total);
+  if(total<25)
+  {
+    total=total;
+  }
+  else if( total<65)
+  {
+    total=total+20;
+  }
+  else if(total>=100)
+  {
+    total=0;
+  }
+  else 
+  {
+    salt= (total-60)*3;
+  }
+  
+   Serial.println("average Moisture value"); 
+Serial.println(total);
+  Serial.println("average Salt value");
+Serial.println(salt);
   // Write to ThingSpeak. There are up to 8 fields in a channel, allowing you to store up to 8 different
   // pieces of information in a channel.  Here, we write to field 1.
-  Serial.println(voltage);
-  ThingSpeak.setField(3,voltage);
+  //Serial.println(voltage);
+ 
+  ThingSpeak.setField(3,total);
+   ThingSpeak.setField(4,salt);
   Serial.println("Channel Updated");
   float h = dht.readHumidity();
   // Read temperature as Celsius (the default)
@@ -134,7 +171,7 @@ void loop() {
 
             }   
     ThingSpeak.writeFields(myChannelNumberOutput, myWriteAPIKey);
-    delay(15000);  
+    delay(3000)  ;
   }   
           
       
